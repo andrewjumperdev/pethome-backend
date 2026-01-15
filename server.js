@@ -6,6 +6,7 @@ import cors from "cors";
 import { corsOptions } from "./config/corsOptions.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import printfulRoutes from "./routes/printfulRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
 });
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
+app.use("/api/printful", printfulRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 API escuchando en http://localhost:${PORT}`);
