@@ -4,9 +4,13 @@ import {
   sendBookingConfirmed,
   sendBookingRejected,
   sendBookingCancelled,
+  requireResend,
 } from "../controllers/emailController.js";
 
 const router = express.Router();
+
+// Todas las rutas requieren Resend configurado
+router.use(requireResend);
 
 // Emails de reservas
 router.post("/booking-received", sendBookingReceived);

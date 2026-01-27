@@ -1,10 +1,35 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Inicializacion lazy de Resend
+let resend = null;
+const getResend = () => {
+  if (resend) return resend;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.includes("YOUR_RESEND_API_KEY")) {
+    return null;
+  }
+
+  resend = new Resend(apiKey);
+  return resend;
+};
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "Maison pour Pets <noreply@maisonpourpets.com>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@maisonpourpets.com";
 const SITE_URL = process.env.SITE_URL || "https://maisonpourpets.com";
+
+// Middleware para verificar que Resend esta configurado
+export const requireResend = (req, res, next) => {
+  const client = getResend();
+  if (!client) {
+    return res.status(503).json({
+      error: "Servicio de email no disponible",
+      message: "Resend API no esta configurado. Agrega RESEND_API_KEY en .env"
+    });
+  }
+  req.resend = client;
+  next();
+};
 
 // Template base HTML
 const baseTemplate = (content) => `
@@ -103,7 +128,7 @@ export const sendBookingReceived = async (req, res) => {
       </p>
     `;
 
-    await resend.emails.send({
+    await req.resend.emails.send({
       from: FROM_EMAIL,
       to: booking.email,
       subject: `Solicitud recibida - ${booking.petName}`,
@@ -137,7 +162,7 @@ export const sendBookingReceived = async (req, res) => {
       </div>
     `;
 
-    await resend.emails.send({
+    await req.resend.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
       subject: `[NUEVA RESERVA] ${booking.petName} - ${formatDate(booking.startDate)}`,
@@ -214,7 +239,7 @@ export const sendBookingConfirmed = async (req, res) => {
       ` : ""}
     `;
 
-    await resend.emails.send({
+    await req.resend.emails.send({
       from: FROM_EMAIL,
       to: booking.email,
       subject: `Confirmacion de reserva - ${booking.petName}`,
@@ -266,7 +291,7 @@ export const sendBookingRejected = async (req, res) => {
       </p>
     `;
 
-    await resend.emails.send({
+    await req.resend.emails.send({
       from: FROM_EMAIL,
       to: booking.email,
       subject: `Actualizacion sobre tu reserva - ${booking.petName}`,
@@ -329,7 +354,7 @@ export const sendBookingCancelled = async (req, res) => {
       </div>
     `;
 
-    await resend.emails.send({
+    await req.resend.emails.send({
       from: FROM_EMAIL,
       to: booking.email,
       subject: `Cancelacion confirmada - ${booking.petName}`,
