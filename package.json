@@ -1,6 +1,8 @@
 {
   "name": "pethome-backend",
   "version": "1.0.0",
+  "description": "Backend API para PetHome/Maison pour Pets con reservas, pagos y tienda integrada.",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "scrape": "node scraper.js",
