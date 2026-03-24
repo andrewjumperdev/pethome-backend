@@ -49,13 +49,19 @@ export const getShippingRates = async (req, res) => {
       return res.status(400).json({ error: "Se requiere recipient y items" });
     }
 
+    console.log("[Printful] Shipping items:", JSON.stringify(items));
+    console.log("[Printful] Shipping recipient country:", recipient.country_code, "zip:", recipient.zip);
+
     const response = await printfulApi.post("/shipping/rates", { recipient, items });
+
+    console.log("[Printful] Shipping rates OK:", response.data?.result?.length, "rates");
     res.json(response.data);
   } catch (error) {
-    console.error("Error calculating shipping:", error.response?.data || error.message);
+    const errData = error.response?.data;
+    console.error("[Printful] Shipping error:", JSON.stringify(errData || error.message));
     res.status(error.response?.status || 500).json({
       error: "Error al calcular envio",
-      details: error.response?.data?.error?.message || error.message,
+      details: errData?.error?.message || errData?.result || error.message,
     });
   }
 };

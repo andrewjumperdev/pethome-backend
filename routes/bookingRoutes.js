@@ -6,6 +6,7 @@ import {
   confirmBooking,
   rejectBooking,
   cancelBooking,
+  resendEmailForBooking,
   requireFirebase,
 } from "../controllers/bookingController.js";
 import {
@@ -16,18 +17,19 @@ import {
 
 const router = express.Router();
 
-// Publico (no requiere Firebase)
+// Public
 router.get("/cancel-policy", getCancellationPolicy);
 
-// Requiere Firebase
-router.get("/by-email/:email", requireFirebase, getBookingsByEmail);
-router.get("/:id", requireFirebase, getBookingById);
+// Client (no Firebase dependency — uses REST API internally)
+router.get("/by-email/:email", getBookingsByEmail);
+router.get("/:id", getBookingById);
 
-// Cliente (requiere token de cancelacion + Firebase)
-router.post("/cancel", requireFirebase, verifyCancellationToken, cancelBooking);
+// Client cancellation (requires cancellation token)
+router.post("/cancel", verifyCancellationToken, cancelBooking);
 
-// Admin (requiere API Key + Firebase)
-router.post("/confirm", requireFirebase, requireAdminApiKey, paymentRateLimiter, confirmBooking);
-router.post("/reject", requireFirebase, requireAdminApiKey, rejectBooking);
+// Admin routes (require API Key)
+router.post("/confirm", requireAdminApiKey, paymentRateLimiter, confirmBooking);
+router.post("/reject", requireAdminApiKey, rejectBooking);
+router.post("/resend-email", requireAdminApiKey, resendEmailForBooking);
 
 export default router;

@@ -92,6 +92,10 @@ export const sanitizeInput = (obj) => {
     return obj.replace(/<[^>]*>/g, "").trim();
   }
 
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeInput);
+  }
+
   if (typeof obj === "object" && obj !== null) {
     const sanitized = {};
     for (const key in obj) {

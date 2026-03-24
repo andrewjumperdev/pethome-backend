@@ -14,6 +14,8 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import capacityRoutes from "./routes/capacityRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
+import clientRoutes from "./routes/clientRoutes.js";
+import promoRoutes from "./routes/promoRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,10 +25,13 @@ app.use(cors(corsOptions));
 app.use(rateLimiter);
 app.use(securityLogger);
 
-// JSON parser (excepto para webhooks de Stripe que necesitan raw body)
+// JSON parser — skip for Stripe webhook routes that need the raw body for signature verification
 app.use((req, res, next) => {
-  if (req.originalUrl === "/api/store/webhook") {
-    next();
+  if (
+    req.originalUrl === "/api/store/webhook" ||
+    req.originalUrl === "/payments/webhook"
+  ) {
+    express.raw({ type: "application/json" })(req, res, next);
   } else {
     express.json()(req, res, next);
   }
@@ -55,6 +60,8 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/capacity", capacityRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/store", storeRoutes);
+app.use("/api/clients", clientRoutes);
+app.use("/api/promo", promoRoutes);
 
 app.listen(PORT, () => {
   console.log(`API escuchando en http://localhost:${PORT}`);
