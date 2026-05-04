@@ -367,3 +367,161 @@ export const sendBookingCancelled = async (req, res) => {
     res.status(500).json({ error: "Error al enviar email" });
   }
 };
+
+// Email: Test — envía todos los templates a un email destino
+export const sendTestEmails = async (req, res) => {
+  try {
+    const { to, type = "all" } = req.body;
+    // Resend requiere dominio verificado para FROM custom.
+    // Para tests usamos onboarding@resend.dev que no necesita verificación.
+    const TEST_FROM = "Maison pour Pets <onboarding@resend.dev>";
+
+    if (!to) {
+      return res.status(400).json({ error: "Campo 'to' requerido (email destino)" });
+    }
+
+    const mockBooking = {
+      petName: "Rocky",
+      petType: "Perro",
+      breed: "Golden Retriever",
+      email: to,
+      ownerName: "Jean Dupont",
+      phone: "+33 6 12 34 56 78",
+      startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      endDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString(),
+      totalPrice: 125.5,
+      specialNeeds: "Toma medicación dos veces al día",
+    };
+
+    const sent = [];
+
+    const templates = {
+      received: async () => {
+        const clientContent = `
+          <h2 style="color: #333; margin-top: 0;">Hemos recibido tu solicitud</h2>
+          <p style="color: #666; line-height: 1.6;">
+            Gracias por confiar en nosotros para el cuidado de <strong>${mockBooking.petName}</strong>.
+            Tu solicitud esta siendo revisada y te confirmaremos en las proximas 24 horas.
+          </p>
+          <div style="background-color: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #8B4513;">Detalles de tu reserva</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 8px 0; color: #666;">Mascota:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${mockBooking.petName} (${mockBooking.petType})</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Llegada:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatDate(mockBooking.startDate)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Salida:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatDate(mockBooking.endDate)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Total:</td><td style="padding: 8px 0; color: #8B4513; font-weight: bold; font-size: 18px;">${formatPrice(mockBooking.totalPrice)}</td></tr>
+            </table>
+          </div>
+          <p style="color: #666; font-size: 14px;"><strong>Nota:</strong> El pago se procesara una vez confirmemos la disponibilidad.</p>
+        `;
+        await req.resend.emails.send({
+          from: TEST_FROM,
+          to,
+          subject: `[TEST] Solicitud recibida - ${mockBooking.petName}`,
+          html: baseTemplate(clientContent),
+        });
+        sent.push("received");
+      },
+
+      confirmed: async () => {
+        const content = `
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background-color: #d4edda; border-radius: 50%; width: 60px; height: 60px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+              <span style="color: #28a745; font-size: 30px;">&#10003;</span>
+            </div>
+          </div>
+          <h2 style="color: #28a745; text-align: center; margin-top: 0;">Reserva Confirmada</h2>
+          <p style="color: #666; line-height: 1.6; text-align: center;">
+            Tu reserva para <strong>${mockBooking.petName}</strong> ha sido confirmada. El pago ha sido procesado exitosamente.
+          </p>
+          <div style="background-color: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #8B4513;">Detalles de tu estancia</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 8px 0; color: #666;">Mascota:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${mockBooking.petName}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Check-in:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatDate(mockBooking.startDate)} a las 14:00</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Check-out:</td><td style="padding: 8px 0; color: #333; font-weight: 500;">${formatDate(mockBooking.endDate)} a las 11:00</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Total pagado:</td><td style="padding: 8px 0; color: #28a745; font-weight: bold;">${formatPrice(mockBooking.totalPrice)}</td></tr>
+            </table>
+          </div>
+          <div style="background-color: #e8f4fd; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #0066cc;">Que traer:</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #666;">
+              <li>Cartilla de vacunacion actualizada</li>
+              <li>Su comida habitual (si tiene dieta especial)</li>
+              <li>Objeto familiar (manta, juguete)</li>
+            </ul>
+          </div>
+        `;
+        await req.resend.emails.send({
+          from: TEST_FROM,
+          to,
+          subject: `[TEST] Confirmacion de reserva - ${mockBooking.petName}`,
+          html: baseTemplate(content),
+        });
+        sent.push("confirmed");
+      },
+
+      rejected: async () => {
+        const content = `
+          <h2 style="color: #dc3545; margin-top: 0;">Lo sentimos</h2>
+          <p style="color: #666; line-height: 1.6;">
+            Lamentamos informarte que no podemos confirmar tu reserva para <strong>${mockBooking.petName}</strong> en las fechas solicitadas.
+          </p>
+          <div style="background-color: #f8f9fa; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #666;"><strong>Motivo:</strong> Capacidad completa para esas fechas</p>
+          </div>
+          <p style="color: #666; line-height: 1.6;">No se ha realizado ningun cargo a tu tarjeta.</p>
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${SITE_URL}/reservar" style="display: inline-block; background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 25px; font-weight: 500;">
+              Buscar otras fechas
+            </a>
+          </div>
+        `;
+        await req.resend.emails.send({
+          from: TEST_FROM,
+          to,
+          subject: `[TEST] Actualizacion sobre tu reserva - ${mockBooking.petName}`,
+          html: baseTemplate(content),
+        });
+        sent.push("rejected");
+      },
+
+      cancelled: async () => {
+        const content = `
+          <h2 style="color: #6c757d; margin-top: 0;">Reserva Cancelada</h2>
+          <p style="color: #666; line-height: 1.6;">Tu reserva para <strong>${mockBooking.petName}</strong> ha sido cancelada exitosamente.</p>
+          <div style="background-color: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #8B4513;">Detalles de la cancelacion</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 8px 0; color: #666;">Fechas canceladas:</td><td style="padding: 8px 0; color: #333;">${formatDate(mockBooking.startDate)} - ${formatDate(mockBooking.endDate)}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Reembolso:</td><td style="padding: 8px 0; color: #28a745; font-weight: bold;">${formatPrice(62.75)} (50%)</td></tr>
+            </table>
+          </div>
+          <div style="background-color: #d4edda; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #155724;"><strong>Reembolso en proceso:</strong> El reembolso de ${formatPrice(62.75)} aparecera en tu cuenta en 5-10 dias habiles.</p>
+          </div>
+        `;
+        await req.resend.emails.send({
+          from: TEST_FROM,
+          to,
+          subject: `[TEST] Cancelacion confirmada - ${mockBooking.petName}`,
+          html: baseTemplate(content),
+        });
+        sent.push("cancelled");
+      },
+    };
+
+    if (type === "all") {
+      for (const fn of Object.values(templates)) await fn();
+    } else if (templates[type]) {
+      await templates[type]();
+    } else {
+      return res.status(400).json({ error: `Tipo inválido. Opciones: all, received, confirmed, rejected, cancelled` });
+    }
+
+    res.json({ success: true, sent, message: `${sent.length} email(s) enviado(s) a ${to}` });
+  } catch (error) {
+    console.error("Error sending test email:", error);
+    res.status(500).json({ error: "Error al enviar email de test", details: error.message });
+  }
+};

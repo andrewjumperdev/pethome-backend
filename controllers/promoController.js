@@ -202,9 +202,17 @@ export const validatePromo = async (req, res) => {
       return res.json({ valid: false, message: "Vous avez déjà utilisé ce code" });
 
     if (promo.condition === "new_client") {
-      const hasBooking = await fsQuery("bookings", "contact.email", emailNorm);
-      if (hasBooking)
-        return res.json({ valid: false, message: "Ce code est réservé aux nouveaux clients" });
+      try {
+        const hasBooking = await fsQuery("bookings", "contact.email", emailNorm);
+        if (hasBooking)
+          return res.json({ valid: false, message: "Ce code est réservé aux nouveaux clients" });
+      } catch (queryErr) {
+        // Si la query falla (ej: falta índice Firestore), verificamos por usedByEmails como fallback
+        console.warn("[Promo] new_client query failed, falling back to usedByEmails check:", queryErr.message);
+        const alreadyUsed = (promo.usedByEmails || []).includes(emailNorm);
+        if (alreadyUsed)
+          return res.json({ valid: false, message: "Ce code est réservé aux nouveaux clients" });
+      }
     }
 
     return res.json({

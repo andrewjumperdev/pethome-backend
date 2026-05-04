@@ -4,6 +4,7 @@ import {
   sendBookingConfirmed,
   sendBookingRejected,
   sendBookingCancelled,
+  sendTestEmails,
   requireResend,
 } from "../controllers/emailController.js";
 
@@ -17,5 +18,8 @@ router.post("/booking-received", sendBookingReceived);
 router.post("/booking-confirmed", sendBookingConfirmed);
 router.post("/booking-rejected", sendBookingRejected);
 router.post("/booking-cancelled", sendBookingCancelled);
+
+// Test — envía emails de prueba con datos mock
+router.post("/test", sendTestEmails);
 
 export default router;
