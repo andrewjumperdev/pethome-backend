@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(timeout 5 node:*)",
-      "Bash(timeout 8 node:*)"
+      "Bash(timeout 8 node:*)",
+      "Bash(node scraper.js)"
     ]
   }
 }

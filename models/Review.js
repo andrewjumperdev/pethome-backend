@@ -4,6 +4,7 @@ const reviewSchema = new mongoose.Schema({
   author:    String,
   date:      Date,
   text:      String,
+  rating:    Number,
   sourceUrl: String
 }, { timestamps: true });
 
