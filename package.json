@@ -17,11 +17,11 @@
     "firebase-admin": "^13.6.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.14.1",
-    "puppeteer": "^24.8.0",
     "resend": "^6.8.0",
     "stripe": "^18.2.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "puppeteer": "^24.8.0"
   }
 }
