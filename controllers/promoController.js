@@ -76,10 +76,24 @@ async function fsQuery(collection, fieldPath, value) {
     structuredQuery: {
       from: [{ collectionId: collection }],
       where: {
-        fieldFilter: {
-          field: { fieldPath },
-          op: "EQUAL",
-          value: toFirestoreValue(value),
+        compositeFilter: {
+          op: "AND",
+          filters: [
+            {
+              fieldFilter: {
+                field: { fieldPath },
+                op: "EQUAL",
+                value: toFirestoreValue(value),
+              },
+            },
+            {
+              fieldFilter: {
+                field: { fieldPath: "status" },
+                op: "EQUAL",
+                value: { stringValue: "confirmed" },
+              },
+            },
+          ],
         },
       },
       limit: 1,
@@ -92,7 +106,6 @@ async function fsQuery(collection, fieldPath, value) {
   });
   if (!res.ok) throw new Error(`Firestore query failed: ${res.status}`);
   const results = await res.json();
-  // results is an array; first element has .document if found
   return results.filter((r) => r.document).length > 0;
 }
 
