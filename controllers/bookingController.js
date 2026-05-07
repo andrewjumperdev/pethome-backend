@@ -155,16 +155,46 @@ function formatDate(iso) {
 
 // ── Email templates ───────────────────────────────────────────────────────────
 
+const SERVICE_LABELS = {
+  boarding: "Pension (hébergement)",
+  daycare: "Garderie de jour",
+  walking: "Promenade",
+  grooming: "Toilettage",
+};
+
+function emailRow(label, value, valueStyle = "") {
+  if (!value) return "";
+  return `<tr>
+    <td style="color:#666;font-size:14px;width:45%;padding:6px 0;">${label}</td>
+    <td style="color:#333;font-size:14px;font-weight:600;padding:6px 0;${valueStyle}">${value}</td>
+  </tr>`;
+}
+
+function buildPetSummary(details, booking) {
+  const pets = details.length > 0 ? details : booking.petName ? [{ name: booking.petName }] : [{ name: "votre animal" }];
+  return pets.map(p => {
+    const parts = [p.name];
+    if (p.breed) parts.push(p.breed);
+    if (p.type || p.species) parts.push(p.type || p.species);
+    if (p.age) parts.push(`${p.age} ans`);
+    return parts.join(" · ");
+  }).join(", ");
+}
+
 function buildConfirmationEmail(bookingId, booking) {
   const details = booking.details || [];
-  const petName = details[0]?.name || booking.petName || "votre animal";
   const clientName = booking.contact?.name || booking.ownerName || "Client";
   const clientEmail = booking.contact?.email || booking.email || "";
+  const clientPhone = booking.contact?.phone || booking.phone || null;
   const startDate = formatDate(booking.startDate || booking.date);
   const endDate = formatDate(booking.endDate || booking.startDate || booking.date);
-  const total = (booking.total || 0).toFixed(2);
-  const arrivalTime = booking.arrivalTime || "non précisé";
-  const departureTime = booking.departureTime || "non précisé";
+  const total = (booking.total || booking.totalPrice || 0).toFixed(2);
+  const arrivalTime = booking.arrivalTime || null;
+  const departureTime = booking.departureTime || null;
+  const serviceLabel = SERVICE_LABELS[booking.serviceId] || booking.serviceId || null;
+  const quantity = Number(booking.quantity) > 1 ? `${booking.quantity} animaux` : null;
+  const notes = booking.notes || booking.specialNeeds || booking.message || null;
+  const petSummary = buildPetSummary(details, booking);
 
   const html = `
 <!DOCTYPE html>
@@ -176,7 +206,7 @@ function buildConfirmationEmail(bookingId, booking) {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
         <tr>
           <td style="background:linear-gradient(135deg,#4CAF50,#2e7d32);padding:40px 40px 30px;text-align:center;">
-            <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;">Réservation Confirmée</h1>
+            <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;">Réservation Confirmée ✅</h1>
             <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:16px;">Maison pour Pets — Hôtel pour animaux</p>
           </td>
         </tr>
@@ -184,42 +214,60 @@ function buildConfirmationEmail(bookingId, booking) {
           <td style="padding:40px;">
             <p style="font-size:16px;color:#333;margin:0 0 20px;">Bonjour <strong>${clientName}</strong>,</p>
             <p style="font-size:16px;color:#555;margin:0 0 30px;line-height:1.6;">
-              Nous avons le plaisir de vous confirmer votre réservation et le paiement a bien été encaissé. Votre animal sera entre de bonnes mains !
+              Nous avons le plaisir de vous confirmer votre réservation. Le paiement a bien été effectué et votre animal sera entre de bonnes mains !
             </p>
 
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fffe;border:1px solid #c8e6c9;border-radius:8px;margin-bottom:30px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fffe;border:1px solid #c8e6c9;border-radius:8px;margin-bottom:24px;">
               <tr><td style="padding:20px;">
-                <h3 style="color:#2e7d32;margin:0 0 16px;font-size:18px;">Détails de la réservation</h3>
-                <table width="100%" cellpadding="6" cellspacing="0">
-                  <tr>
-                    <td style="color:#666;font-size:14px;width:45%;">Référence</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">#${bookingId}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Animal</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">${petName}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Date d'arrivée</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">${startDate} à ${arrivalTime}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Date de départ</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">${endDate} à ${departureTime}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Montant encaissé</td>
-                    <td style="color:#2e7d32;font-size:16px;font-weight:700;">${total} €</td>
-                  </tr>
+                <h3 style="color:#2e7d32;margin:0 0 16px;font-size:17px;">Détails de la réservation</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  ${emailRow("Référence", `#${bookingId}`)}
+                  ${emailRow("Animal(aux)", petSummary)}
+                  ${quantity ? emailRow("Nombre", quantity) : ""}
+                  ${serviceLabel ? emailRow("Service", serviceLabel) : ""}
+                  ${emailRow("Date d'arrivée", arrivalTime ? `${startDate} à ${arrivalTime}` : startDate)}
+                  ${emailRow("Date de départ", departureTime ? `${endDate} à ${departureTime}` : endDate)}
+                  ${emailRow("Montant encaissé", `${total} €`, "color:#2e7d32;font-size:16px;")}
                 </table>
               </td></tr>
             </table>
 
-            <p style="font-size:15px;color:#555;margin:0 0 20px;line-height:1.6;">
-              Si vous avez des questions ou souhaitez nous communiquer des informations supplémentaires sur votre animal, n'hésitez pas à nous contacter en répondant à cet email.
-            </p>
+            ${clientPhone ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7ff;border:1px solid #bbdefb;border-radius:8px;margin-bottom:24px;">
+              <tr><td style="padding:16px 20px;">
+                <h3 style="color:#1565c0;margin:0 0 10px;font-size:16px;">Vos coordonnées enregistrées</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  ${emailRow("Téléphone", clientPhone)}
+                  ${emailRow("Email", clientEmail)}
+                </table>
+              </td></tr>
+            </table>
+            ` : ""}
 
-            <p style="font-size:15px;color:#555;margin:0;line-height:1.6;">
+            ${notes ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffde7;border:1px solid #f9a825;border-radius:8px;margin-bottom:24px;">
+              <tr><td style="padding:16px 20px;">
+                <h3 style="color:#f57f17;margin:0 0 8px;font-size:16px;">Notes transmises</h3>
+                <p style="color:#555;margin:0;font-size:14px;line-height:1.6;">${notes}</p>
+              </td></tr>
+            </table>
+            ` : ""}
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#e8f5e9;border-radius:8px;margin-bottom:30px;">
+              <tr><td style="padding:16px 20px;">
+                <h3 style="color:#2e7d32;margin:0 0 10px;font-size:16px;">À prévoir pour l'arrivée</h3>
+                <ul style="margin:0;padding-left:20px;color:#555;font-size:14px;line-height:1.8;">
+                  <li>Carnet de santé / vaccinations à jour</li>
+                  <li>Nourriture habituelle (si régime particulier)</li>
+                  <li>Un objet familier (jouet, couverture)</li>
+                </ul>
+              </td></tr>
+            </table>
+
+            <p style="font-size:15px;color:#555;margin:0 0 20px;line-height:1.6;">
+              Pour toute question, répondez simplement à cet email. Nous vous répondrons dans les meilleurs délais.
+            </p>
+            <p style="font-size:15px;color:#555;margin:0;">
               À très bientôt,<br>
               <strong style="color:#2e7d32;">L'équipe Maison pour Pets</strong>
             </p>
@@ -228,8 +276,8 @@ function buildConfirmationEmail(bookingId, booking) {
         <tr>
           <td style="background:#f8f8f8;padding:20px 40px;text-align:center;border-top:1px solid #eee;">
             <p style="color:#999;font-size:12px;margin:0;">
-              Maison pour Pets · ${clientEmail}<br>
-              Vous recevez cet email car vous avez effectué une réservation sur maisonpourpets.com
+              Maison pour Pets · <a href="https://maisonpourpets.com" style="color:#999;">maisonpourpets.com</a><br>
+              Cet email a été envoyé à ${clientEmail} suite à votre réservation.
             </p>
           </td>
         </tr>
@@ -243,18 +291,19 @@ function buildConfirmationEmail(bookingId, booking) {
     from: FROM_EMAIL,
     to: [clientEmail],
     bcc: [ADMIN_EMAIL],
-    subject: `✅ Votre réservation est confirmée — Maison pour Pets`,
+    subject: `✅ Réservation confirmée #${bookingId} — Maison pour Pets`,
     html,
   };
 }
 
 function buildRejectionEmail(bookingId, booking, reason) {
   const details = booking.details || [];
-  const petName = details[0]?.name || booking.petName || "votre animal";
   const clientName = booking.contact?.name || booking.ownerName || "Client";
   const clientEmail = booking.contact?.email || booking.email || "";
   const startDate = formatDate(booking.startDate || booking.date);
   const endDate = formatDate(booking.endDate || booking.startDate || booking.date);
+  const serviceLabel = SERVICE_LABELS[booking.serviceId] || booking.serviceId || null;
+  const petSummary = buildPetSummary(details, booking);
 
   const html = `
 <!DOCTYPE html>
@@ -266,7 +315,7 @@ function buildRejectionEmail(bookingId, booking, reason) {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
         <tr>
           <td style="background:linear-gradient(135deg,#e57373,#c62828);padding:40px 40px 30px;text-align:center;">
-            <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;">Réservation Non Disponible</h1>
+            <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;">Demande Non Disponible</h1>
             <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:16px;">Maison pour Pets — Hôtel pour animaux</p>
           </td>
         </tr>
@@ -274,43 +323,41 @@ function buildRejectionEmail(bookingId, booking, reason) {
           <td style="padding:40px;">
             <p style="font-size:16px;color:#333;margin:0 0 20px;">Bonjour <strong>${clientName}</strong>,</p>
             <p style="font-size:16px;color:#555;margin:0 0 30px;line-height:1.6;">
-              Nous sommes au regret de vous informer que nous ne sommes pas en mesure d'accepter votre demande de réservation pour les dates demandées.
+              Nous sommes au regret de vous informer que nous ne pouvons pas accepter votre demande pour les dates souhaitées.
             </p>
 
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:8px;margin-bottom:30px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:8px;margin-bottom:24px;">
               <tr><td style="padding:20px;">
-                <h3 style="color:#c62828;margin:0 0 16px;font-size:18px;">Détails de la demande</h3>
-                <table width="100%" cellpadding="6" cellspacing="0">
-                  <tr>
-                    <td style="color:#666;font-size:14px;width:45%;">Référence</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">#${bookingId}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Animal</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">${petName}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Date d'arrivée souhaitée</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">${startDate}</td>
-                  </tr>
-                  <tr>
-                    <td style="color:#666;font-size:14px;">Date de départ souhaitée</td>
-                    <td style="color:#333;font-size:14px;font-weight:600;">${endDate}</td>
-                  </tr>
-                  ${reason ? `<tr>
-                    <td style="color:#666;font-size:14px;">Motif</td>
-                    <td style="color:#c62828;font-size:14px;font-weight:600;">${reason}</td>
-                  </tr>` : ""}
+                <h3 style="color:#c62828;margin:0 0 16px;font-size:17px;">Détails de votre demande</h3>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  ${emailRow("Référence", `#${bookingId}`)}
+                  ${emailRow("Animal(aux)", petSummary)}
+                  ${serviceLabel ? emailRow("Service demandé", serviceLabel) : ""}
+                  ${emailRow("Arrivée souhaitée", startDate)}
+                  ${emailRow("Départ souhaité", endDate)}
                 </table>
               </td></tr>
             </table>
 
-            <p style="font-size:15px;color:#555;margin:0 0 20px;line-height:1.6;">
-              Aucun prélèvement n'a été effectué sur votre carte. N'hésitez pas à nous contacter pour proposer d'autres dates ou pour toute question.
-            </p>
+            ${reason ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff5f5;border-left:4px solid #c62828;border-radius:4px;margin-bottom:24px;">
+              <tr><td style="padding:16px 20px;">
+                <p style="margin:0;color:#555;font-size:14px;"><strong>Motif :</strong> ${reason}</p>
+              </td></tr>
+            </table>
+            ` : ""}
 
-            <p style="font-size:15px;color:#555;margin:0;line-height:1.6;">
-              Nous espérons pouvoir vous accueillir prochainement,<br>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#e8f5e9;border-radius:8px;margin-bottom:30px;">
+              <tr><td style="padding:16px 20px;">
+                <p style="margin:0;color:#2e7d32;font-size:14px;font-weight:600;">Aucun prélèvement n'a été effectué sur votre carte.</p>
+              </td></tr>
+            </table>
+
+            <p style="font-size:15px;color:#555;margin:0 0 20px;line-height:1.6;">
+              N'hésitez pas à nous recontacter pour proposer d'autres dates. Nous ferons notre possible pour trouver une solution.
+            </p>
+            <p style="font-size:15px;color:#555;margin:0;">
+              Cordialement,<br>
               <strong style="color:#c62828;">L'équipe Maison pour Pets</strong>
             </p>
           </td>
@@ -318,8 +365,8 @@ function buildRejectionEmail(bookingId, booking, reason) {
         <tr>
           <td style="background:#f8f8f8;padding:20px 40px;text-align:center;border-top:1px solid #eee;">
             <p style="color:#999;font-size:12px;margin:0;">
-              Maison pour Pets · ${clientEmail}<br>
-              Vous recevez cet email car vous avez effectué une demande de réservation sur maisonpourpets.com
+              Maison pour Pets · <a href="https://maisonpourpets.com" style="color:#999;">maisonpourpets.com</a><br>
+              Cet email a été envoyé à ${clientEmail} suite à votre demande de réservation.
             </p>
           </td>
         </tr>
@@ -333,7 +380,7 @@ function buildRejectionEmail(bookingId, booking, reason) {
     from: FROM_EMAIL,
     to: [clientEmail],
     bcc: [ADMIN_EMAIL],
-    subject: `Votre demande de réservation — Maison pour Pets`,
+    subject: `Votre demande de réservation #${bookingId} — Maison pour Pets`,
     html,
   };
 }
