@@ -8,6 +8,7 @@ export const rateLimiter = rateLimit({
   message: { error: "Demasiadas solicitudes, intenta de nuevo en 15 minutos" },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 // Rate limiter estricto para pagos - 10 requests por hora
@@ -17,6 +18,7 @@ export const paymentRateLimiter = rateLimit({
   message: { error: "Demasiados intentos de pago, intenta de nuevo en 1 hora" },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 // Middleware para verificar API Key de admin
