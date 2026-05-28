@@ -374,7 +374,7 @@ export const sendTestEmails = async (req, res) => {
     const { to, type = "all" } = req.body;
     // Resend requiere dominio verificado para FROM custom.
     // Para tests usamos onboarding@resend.dev que no necesita verificación.
-    const TEST_FROM = "Maison pour Pets <onboarding@resend.dev>";
+    const TEST_FROM = FROM_EMAIL;
 
     if (!to) {
       return res.status(400).json({ error: "Campo 'to' requerido (email destino)" });
