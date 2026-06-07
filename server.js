@@ -20,6 +20,9 @@ import promoRoutes from "./routes/promoRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Railway (y cualquier reverse proxy) pone X-Forwarded-For — necesario para rate-limit
+app.set("trust proxy", 1);
+
 // Middleware global
 app.use(cors(corsOptions));
 app.use(rateLimiter);

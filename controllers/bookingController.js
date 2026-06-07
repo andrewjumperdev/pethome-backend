@@ -200,87 +200,81 @@ function buildConfirmationEmail(bookingId, booking) {
 <!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:48px 16px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.10);">
+
+        <!-- HEADER -->
         <tr>
-          <td style="background:linear-gradient(135deg,#4CAF50,#2e7d32);padding:40px 40px 30px;text-align:center;">
-            <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;">Réservation Confirmée ✅</h1>
-            <p style="color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:16px;">Maison pour Pets — Hôtel pour animaux</p>
+          <td style="background:linear-gradient(135deg,#2e7d32 0%,#43a047 60%,#66bb6a 100%);padding:48px 40px 40px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;margin-bottom:16px;">🐾</div>
+            <h1 style="color:#ffffff;margin:0;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Réservation Confirmée ✅</h1>
+            <p style="color:rgba(255,255,255,0.80);margin:10px 0 0;font-size:14px;letter-spacing:1px;text-transform:uppercase;">Maison pour Pets</p>
           </td>
         </tr>
+
+        <!-- BODY -->
         <tr>
-          <td style="padding:40px;">
-            <p style="font-size:16px;color:#333;margin:0 0 20px;">Bonjour <strong>${clientName}</strong>,</p>
-            <p style="font-size:16px;color:#555;margin:0 0 30px;line-height:1.6;">
-              Nous avons le plaisir de vous confirmer votre réservation. Le paiement a bien été effectué et votre animal sera entre de bonnes mains !
+          <td style="padding:40px 40px 32px;">
+
+            <p style="font-size:17px;color:#1a1a1a;margin:0 0 8px;font-weight:600;">Bonjour ${clientName},</p>
+            <p style="font-size:15px;color:#555;margin:0 0 32px;line-height:1.7;">
+              Nous avons le plaisir de vous confirmer votre réservation.<br>
+              Nous vous remercions pour votre confiance et avons hâte d'accueillir votre boule d'amour pour lui faire passer un merveilleux séjour à nos côtés.
             </p>
 
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fffe;border:1px solid #c8e6c9;border-radius:8px;margin-bottom:24px;">
-              <tr><td style="padding:20px;">
-                <h3 style="color:#2e7d32;margin:0 0 16px;font-size:17px;">Détails de la réservation</h3>
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  ${emailRow("Référence", `#${bookingId}`)}
-                  ${emailRow("Animal(aux)", petSummary)}
-                  ${quantity ? emailRow("Nombre", quantity) : ""}
-                  ${serviceLabel ? emailRow("Service", serviceLabel) : ""}
-                  ${emailRow("Date d'arrivée", arrivalTime ? `${startDate} à ${arrivalTime}` : startDate)}
-                  ${emailRow("Date de départ", departureTime ? `${endDate} à ${departureTime}` : endDate)}
-                  ${emailRow("Montant encaissé", `${total} €`, "color:#2e7d32;font-size:16px;")}
-                </table>
-              </td></tr>
+            <!-- BOOKING DETAILS CARD -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:12px;overflow:hidden;margin-bottom:24px;border:1px solid #e8f5e9;">
+              <tr>
+                <td style="background:#2e7d32;padding:14px 20px;">
+                  <span style="color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Détails de la réservation</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:20px;background:#fafffe;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    ${emailRow("🐶 Animal(aux)", petSummary)}
+                    ${quantity ? emailRow("🔢 Nombre", quantity) : ""}
+                    ${serviceLabel ? emailRow("🏠 Service", serviceLabel) : ""}
+                    ${emailRow("📅 Arrivée", arrivalTime ? `${startDate} à ${arrivalTime}` : startDate)}
+                    ${emailRow("📅 Départ", departureTime ? `${endDate} à ${departureTime}` : endDate)}
+                    <tr><td colspan="2" style="padding:8px 0;"><hr style="border:none;border-top:1px solid #e0e0e0;margin:4px 0;"></td></tr>
+                    <tr>
+                      <td style="padding:8px 0;font-size:13px;color:#666;width:45%;">📍 Notre adresse</td>
+                      <td style="padding:8px 0;font-size:13px;color:#333;font-weight:600;">15 rue Prosper Legouté, 92160 Antony</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;font-size:13px;color:#666;">📞 Contact</td>
+                      <td style="padding:8px 0;font-size:13px;color:#333;font-weight:600;">06 19 73 85 90</td>
+                    </tr>
+                    <tr><td colspan="2" style="padding:8px 0;"><hr style="border:none;border-top:1px solid #e0e0e0;margin:4px 0;"></td></tr>
+                    ${emailRow("💶 Montant", `${total} €`, "color:#2e7d32;font-size:17px;font-weight:700;")}
+                  </table>
+                </td>
+              </tr>
             </table>
 
-            ${clientPhone ? `
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7ff;border:1px solid #bbdefb;border-radius:8px;margin-bottom:24px;">
-              <tr><td style="padding:16px 20px;">
-                <h3 style="color:#1565c0;margin:0 0 10px;font-size:16px;">Vos coordonnées enregistrées</h3>
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  ${emailRow("Téléphone", clientPhone)}
-                  ${emailRow("Email", clientEmail)}
-                </table>
-              </td></tr>
-            </table>
-            ` : ""}
-
-            ${notes ? `
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffde7;border:1px solid #f9a825;border-radius:8px;margin-bottom:24px;">
-              <tr><td style="padding:16px 20px;">
-                <h3 style="color:#f57f17;margin:0 0 8px;font-size:16px;">Notes transmises</h3>
-                <p style="color:#555;margin:0;font-size:14px;line-height:1.6;">${notes}</p>
-              </td></tr>
-            </table>
-            ` : ""}
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#e8f5e9;border-radius:8px;margin-bottom:30px;">
-              <tr><td style="padding:16px 20px;">
-                <h3 style="color:#2e7d32;margin:0 0 10px;font-size:16px;">À prévoir pour l'arrivée</h3>
-                <ul style="margin:0;padding-left:20px;color:#555;font-size:14px;line-height:1.8;">
-                  <li>Carnet de santé / vaccinations à jour</li>
-                  <li>Nourriture habituelle (si régime particulier)</li>
-                  <li>Un objet familier (jouet, couverture)</li>
-                </ul>
-              </td></tr>
-            </table>
-
-            <p style="font-size:15px;color:#555;margin:0 0 20px;line-height:1.6;">
-              Pour toute question, répondez simplement à cet email. Nous vous répondrons dans les meilleurs délais.
+            <p style="font-size:14px;color:#777;margin:0 0 20px;line-height:1.7;">
+              Pour toute question, nous vous invitons à nous contacter par téléphone.
             </p>
-            <p style="font-size:15px;color:#555;margin:0;">
-              À très bientôt,<br>
+            <p style="font-size:15px;color:#333;margin:0;">
+              À très bientôt !<br>
               <strong style="color:#2e7d32;">L'équipe Maison pour Pets</strong>
             </p>
           </td>
         </tr>
+
+        <!-- FOOTER -->
         <tr>
-          <td style="background:#f8f8f8;padding:20px 40px;text-align:center;border-top:1px solid #eee;">
-            <p style="color:#999;font-size:12px;margin:0;">
-              Maison pour Pets · <a href="https://maisonpourpets.com" style="color:#999;">maisonpourpets.com</a><br>
+          <td style="background:#f7f7f7;padding:24px 40px;text-align:center;border-top:1px solid #eeeeee;">
+            <p style="color:#aaa;font-size:12px;margin:0;line-height:1.8;">
+              Maison pour Pets &nbsp;·&nbsp; <a href="https://maisonpourpets.com" style="color:#2e7d32;text-decoration:none;">maisonpourpets.com</a><br>
               Cet email a été envoyé à ${clientEmail} suite à votre réservation.
             </p>
           </td>
         </tr>
+
       </table>
     </td></tr>
   </table>
@@ -625,10 +619,11 @@ export const confirmBooking = async (req, res) => {
   let emailStatus = "sent";
   try {
     const emailData = buildConfirmationEmail(bookingId, booking);
-    await resend.emails.send(emailData);
-    console.log(`[Confirm] Confirmation email sent for booking ${bookingId}`);
+    const emailResult = await resend.emails.send(emailData);
+    if (emailResult.error) throw new Error(emailResult.error.message || JSON.stringify(emailResult.error));
+    console.log(`[Confirm] Confirmation email sent for booking ${bookingId} — id: ${emailResult.data?.id}`);
   } catch (emailErr) {
-    console.error("[Confirm] Email failed:", emailErr);
+    console.error("[Confirm] Email failed:", emailErr.message);
     emailStatus = "failed";
     try {
       await fsUpdate("bookings", bookingId, { emailStatus: "failed" });
@@ -708,10 +703,11 @@ export const rejectBooking = async (req, res) => {
   let emailStatus = "sent";
   try {
     const emailData = buildRejectionEmail(bookingId, booking, reason);
-    await resend.emails.send(emailData);
-    console.log(`[Reject] Rejection email sent for booking ${bookingId}`);
+    const emailResult = await resend.emails.send(emailData);
+    if (emailResult.error) throw new Error(emailResult.error.message || JSON.stringify(emailResult.error));
+    console.log(`[Reject] Rejection email sent for booking ${bookingId} — id: ${emailResult.data?.id}`);
   } catch (emailErr) {
-    console.error("[Reject] Email failed:", emailErr);
+    console.error("[Reject] Email failed:", emailErr.message);
     emailStatus = "failed";
     try {
       await fsUpdate("bookings", bookingId, { emailStatus: "failed" });
@@ -758,9 +754,10 @@ export const resendEmailForBooking = async (req, res) => {
         ? buildConfirmationEmail(bookingId, booking)
         : buildRejectionEmail(bookingId, booking, booking.rejectionReason || "");
 
-    await resend.emails.send(emailData);
+    const emailResult = await resend.emails.send(emailData);
+    if (emailResult.error) throw new Error(emailResult.error.message || JSON.stringify(emailResult.error));
     await fsUpdate("bookings", bookingId, { emailStatus: "sent" });
-    console.log(`[Resend] Email (${type}) resent for booking ${bookingId}`);
+    console.log(`[Resend] Email (${type}) resent for booking ${bookingId} — id: ${emailResult.data?.id}`);
     return res.json({ success: true });
   } catch (err) {
     console.error("[Resend] Email error:", err);
