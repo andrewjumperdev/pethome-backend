@@ -765,6 +765,67 @@ export const resendEmailForBooking = async (req, res) => {
   }
 };
 
+// ── POST /api/bookings/admin-cancel ──────────────────────────────────────────
+// Admin-initiated cancellation. For now it only flips the status to "cancelled"
+// (refunds will be wired later). Pass { refund: true } to also refund via Stripe.
+export const adminCancelBooking = async (req, res) => {
+  const { bookingId, reason, refund } = req.body;
+  if (!bookingId) return res.status(400).json({ error: "bookingId requis" });
+
+  let bookingDoc;
+  try {
+    bookingDoc = await fsGetDoc("bookings", bookingId);
+  } catch (err) {
+    console.error("[AdminCancel] fetch error:", err);
+    return res.status(500).json({ error: "Erreur lors de la récupération de la réservation" });
+  }
+  if (!bookingDoc) return res.status(404).json({ error: "Réservation introuvable" });
+
+  const booking = bookingDoc.data;
+
+  if (booking.status === "cancelled") {
+    return res.status(400).json({ error: "La réservation est déjà annulée" });
+  }
+
+  // Optional Stripe refund (opt-in for now)
+  let refundResult = null;
+  if (refund && booking.paymentId && booking.paymentStatus === "paid") {
+    try {
+      refundResult = await stripe.refunds.create({
+        payment_intent: booking.paymentId,
+        reason: "requested_by_customer",
+        metadata: { bookingId, cancelledBy: "admin" },
+      });
+    } catch (err) {
+      console.error("[AdminCancel] refund error:", err);
+      return res.status(400).json({ error: "Erreur lors du remboursement", details: err.message });
+    }
+  }
+
+  try {
+    await fsUpdate("bookings", bookingId, {
+      status: "cancelled",
+      cancelledAt: new Date().toISOString(),
+      cancelledBy: "admin",
+      cancellationReason: reason || "",
+      ...(refundResult && {
+        refundId: refundResult.id,
+        refundAmount: refundResult.amount / 100,
+        paymentStatus: "refunded",
+      }),
+    });
+  } catch (err) {
+    console.error("[AdminCancel] update error:", err);
+    return res.status(500).json({ error: "Erreur lors de l'annulation de la réservation" });
+  }
+
+  return res.json({
+    success: true,
+    refunded: !!refundResult,
+    refundAmount: refundResult ? refundResult.amount / 100 : 0,
+  });
+};
+
 // ── POST /api/bookings/cancel ─────────────────────────────────────────────────
 
 export const cancelBooking = async (req, res) => {

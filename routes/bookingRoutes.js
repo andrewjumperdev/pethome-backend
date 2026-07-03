@@ -6,6 +6,7 @@ import {
   confirmBooking,
   rejectBooking,
   cancelBooking,
+  adminCancelBooking,
   resendEmailForBooking,
   requireFirebase,
 } from "../controllers/bookingController.js";
@@ -30,6 +31,7 @@ router.post("/cancel", verifyCancellationToken, cancelBooking);
 // Admin routes (require API Key)
 router.post("/confirm", requireAdminApiKey, paymentRateLimiter, confirmBooking);
 router.post("/reject", requireAdminApiKey, rejectBooking);
+router.post("/admin-cancel", requireAdminApiKey, adminCancelBooking);
 router.post("/resend-email", requireAdminApiKey, resendEmailForBooking);
 
 export default router;
