@@ -10,7 +10,7 @@ const WEB_API_KEY =
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
 const MAX_CAPACITY = parseInt(process.env.MAX_CAPACITY || "5", 10);
-const FROM_EMAIL = process.env.FROM_EMAIL || "Maison pour Pets <reservations@maisonpourpets.com>";
+const FROM_EMAIL = process.env.FROM_EMAIL || "Maison pour Pets <reservations@mail.maisonpourpets.com>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@maisonpourpets.com";
 
 // ── No-op middleware — kept so routes file doesn't need changes ───────────────
